@@ -37,7 +37,7 @@ export async function requestEstablishments(
   neighborhoodId: number | string,
 ): Promise<EstablishmentsResult> {
   try {
-    const response = await api.get<unknown>(
+    const response = await api.get<Establishment[]>(
       `/properties/${propertyId}/neighborhoods/${neighborhoodId}/establishments`,
     )
     if (response.status === 404) {

@@ -46,3 +46,15 @@ npm run build
 ```sh
 npm run lint
 ```
+
+## Deploy to Vercel
+
+Import this repository in Vercel. `vercel.json` selects the Vite preset, builds with `npm run build`, and publishes the `dist` folder. Unknown paths rewrite to `index.html` so Vue Router can open routes such as `/properties/1` after a refresh.
+
+Set this environment variable in the Vercel project before the first build. Vite bakes it into the client, so a later change needs a new deployment.
+
+| Name | Value |
+| --- | --- |
+| `VITE_API_BASE_URL` | The Rails API origin, including `/api` |
+
+Copy `.env.example` for the variable name. Node 22 comes from `.nvmrc`.

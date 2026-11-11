@@ -9,13 +9,11 @@
     <v-card class="mt-8 px-2 py-3" color="peach">
       <v-card-text class="text-lg leading-[1.6] text-ink [&_p+p]:mt-4">
         <p>
-          Section L is an apartment-hotel in Japan, part of Eave Hospitality. The rooms are made for
-          staying put: more space than a typical hotel room, with the service of a hotel when you
-          want it.
-        </p>
-        <p>
-          Book direct for member rates, midweek stays, and longer visits in Tokyo. No wrong turns
-          here.
+          InterSectionL is a platform for discovering and booking unique places to stay around
+          Tokyo. It is a subsidiary of
+          <a href="https://section-l.co" target="_blank">Section L</a>, an apartment-hotel in Tokyo,
+          Japan which is part of Eave Hospitality. The rooms are made for staying put: more space
+          than a typical hotel room, with the service of a hotel when you want it.
         </p>
       </v-card-text>
     </v-card>
