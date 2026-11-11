@@ -37,18 +37,33 @@ describe('GuestLoginForm', () => {
     expect(loginAsGuest).not.toHaveBeenCalled()
   })
 
-  it('rejects a keycard that is not letters and numbers', async () => {
+  it('rejects a keycard with characters other than letters, numbers, hyphens, and slashes', async () => {
     const mounted = mountComponent(GuestLoginForm)
     const auth = useAuthStore()
     const loginAsGuest = vi.spyOn(auth, 'loginAsGuest').mockResolvedValue(null)
     await mounted.ready
 
-    await mounted.wrapper.get('input').setValue('abc-1')
+    await mounted.wrapper.get('input').setValue('abc_1')
     await mounted.wrapper.get('form').trigger('submit')
     await mounted.wrapper.vm.$nextTick()
 
-    expect(mounted.wrapper.text()).toContain('Keycard # must be letters and numbers only')
+    expect(mounted.wrapper.text()).toContain(
+      'Keycard # must be letters, numbers, hyphens, and slashes only',
+    )
     expect(loginAsGuest).not.toHaveBeenCalled()
+  })
+
+  it('accepts a keycard that includes hyphens and slashes', async () => {
+    const mounted = mountComponent(GuestLoginForm)
+    const auth = useAuthStore()
+    const loginAsGuest = vi.spyOn(auth, 'loginAsGuest').mockResolvedValue(null)
+    await mounted.ready
+
+    await mounted.wrapper.get('input').setValue('ab-1/2')
+    await mounted.wrapper.get('form').trigger('submit')
+    await mounted.wrapper.vm.$nextTick()
+
+    expect(loginAsGuest).toHaveBeenCalledWith('ab-1/2')
   })
 
   it('logs in with a trimmed keycard', async () => {
