@@ -51,7 +51,7 @@ npm run lint
 
 Import this repository in Vercel. `vercel.json` selects the Vite preset, builds with `npm run build`, and publishes the `dist` folder. Unknown paths rewrite to `index.html` so Vue Router can open routes such as `/properties/1` after a refresh.
 
-Set this environment variable in the Vercel project before the first build. Vite bakes it into the client, so a later change needs a new deployment.
+Set this environment variable in the Vercel project before the first build. Vite bakes it into the client, so a later change needs a new deployment. The API allows `https://*.vercel.app`. For any other site address, set `CORS_ORIGINS` on the API to that exact origin and restart it.
 
 | Name | Value |
 | --- | --- |

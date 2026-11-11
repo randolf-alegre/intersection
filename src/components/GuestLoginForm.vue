@@ -9,10 +9,10 @@ const auth = useAuthStore()
 
 const required = (value: string) => value.trim().length > 0 || 'Keycard # is required'
 
-const alphanumeric = (value: string) =>
+const keycardCharacters = (value: string) =>
   value.trim().length === 0 ||
-  /^[A-Za-z0-9]+$/.test(value) ||
-  'Keycard # must be letters and numbers only'
+  /^[A-Za-z0-9/-]+$/.test(value) ||
+  'Keycard # must be letters, numbers, hyphens, and slashes only'
 
 async function submit() {
   const result = await form.value?.validate()
@@ -31,11 +31,11 @@ async function submit() {
   >
     <v-text-field
       v-model="keycard"
-      :rules="[required, alphanumeric]"
+      :rules="[required, keycardCharacters]"
       autocomplete="off"
       data-test-id="guest-keycard"
       label="Keycard #"
-      pattern="[A-Za-z0-9]+"
+      pattern="[A-Za-z0-9/-]+"
       required
       variant="outlined"
     />
