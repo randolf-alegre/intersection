@@ -1,0 +1,22 @@
+@layer theme, base, components, utilities;
+
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities);
+
+@theme {
+  --font-sans: 'Outfit', sans-serif;
+  --color-linen: #fff6ec;
+  --color-peach: #fbe5d9;
+  --color-flame: #e2552c;
+  --color-flame-dark: #d43e22;
+  --color-ink: #212121;
+  --color-cream: #fffefd;
+  --color-muted: #737373;
+}
+
+@custom-variant active-link (&:is(.v-btn--active, .router-link-exact-active));
+
+:root {
+  --v-font-body: 'Outfit', sans-serif;
+  --v-font-heading: 'Outfit', sans-serif;
+}
