@@ -13,7 +13,7 @@
         <div class="flex min-w-0 items-center px-4 lg:px-6">
           <RouterLink
             class="inline-flex h-10 items-center rounded-[10px] bg-linen px-3.5 text-[0.95rem] font-black tracking-[0.06em] text-flame no-underline uppercase"
-            to="/"
+            :to="auth.admin ? '/admin' : '/'"
           >
             InterSection
           </RouterLink>
@@ -51,8 +51,8 @@
 </template>
 
 <script setup lang="ts">
-import { useAuthStore } from '@/stores/authStore'
-import MenuList from '@/components/MenuList.vue'
+import { useAuthStore } from '@/shared/stores/authStore'
+import MenuList from '@/shared/components/MenuList.vue'
 
 const auth = useAuthStore()
 </script>

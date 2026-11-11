@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
-import { savedLoginSession } from '@/services/authentication'
+import HomeView from '@/modules/guest/views/HomeView.vue'
+import { savedLoginSession } from '@/shared/services/authentication'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -12,27 +12,33 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/admin',
+      name: 'dashboard',
+      component: () => import('@/modules/admin/views/dashboardView.vue'),
+      meta: { requiresAuth: true, access: 'admin' },
+    },
+    {
       path: '/about',
       name: 'about',
       // route level code-splitting
       // this generates a separate chunk (About.[hash].js) for this route
       // which is lazy-loaded when the route is visited.
-      component: () => import('../views/AboutView.vue'),
+      component: () => import('@/shared/views/AboutView.vue'),
     },
     {
       path: '/login',
       name: 'login',
-      component: () => import('../views/LoginView.vue'),
+      component: () => import('@/shared/views/LoginView.vue'),
     },
     {
       path: '/properties/:property_id',
       name: 'property',
-      component: () => import('../views/PropertyView.vue'),
+      component: () => import('@/modules/guest/views/PropertyView.vue'),
     },
     {
       path: '/properties/:property_id/neighborhoods/:neighborhood_id/establishments',
       name: 'establishment',
-      component: () => import('../views/EstablishmentView.vue'),
+      component: () => import('@/modules/guest/views/EstablishmentView.vue'),
     },
     {
       path: '/:pathMatch(.*)*',
@@ -54,8 +60,12 @@ router.beforeEach((to) => {
     return { name: 'login', replace: true }
   }
 
-  if (to.name === 'login' && session) {
+  if (session && to.meta.access === 'admin' && !session.admin) {
     return { name: 'home', replace: true }
+  }
+
+  if (to.name === 'login' && session) {
+    return { name: session.admin ? 'dashboard' : 'home', replace: true }
   }
 })
 
