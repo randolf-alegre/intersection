@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { reactive, ref, watch } from 'vue'
 import type { VForm } from 'vuetify/components'
+import { useConfirmDelete } from '@/modules/admin/composables/useConfirmDelete'
 import { useEstablishmentStore } from '@/modules/guest/stores/establishmentStore'
 import type { EstablishmentCategory } from '@/shared/services/establishmentCategoryService'
 import type { Establishment, EstablishmentFields } from '@/shared/services/establishmentService'
@@ -17,9 +18,11 @@ const emit = defineEmits<{
 }>()
 
 const establishmentStore = useEstablishmentStore()
-const confirmingDelete = ref(false)
-const deleting = ref(false)
-const deleteError = ref<string | null>(null)
+const { confirmingDelete, deleting, deleteError, resetDelete, confirmDelete } = useConfirmDelete(
+  () => props.establishment?.id,
+  (id) => establishmentStore.removeEstablishment(id),
+  () => emit('deleted'),
+)
 
 const fields = reactive<EstablishmentFields>({
   name: '',
@@ -54,31 +57,10 @@ watch(
     fields.maps = establishment?.maps ?? ''
     fields.coverImage = establishment?.coverImage ?? ''
     fields.tags = establishment?.tags ?? ''
-    confirmingDelete.value = false
-    deleteError.value = null
+    resetDelete()
   },
   { immediate: true },
 )
-
-async function confirmDelete() {
-  const establishment = props.establishment
-  if (!establishment) return
-
-  deleting.value = true
-  deleteError.value = null
-  try {
-    const result = await establishmentStore.removeEstablishment(establishment.id)
-    if (!result.ok) {
-      deleteError.value = result.error.message
-      return
-    }
-
-    confirmingDelete.value = false
-    emit('deleted')
-  } finally {
-    deleting.value = false
-  }
-}
 
 async function submit(): Promise<EstablishmentFormValues | null> {
   const result = await form.value?.validate()

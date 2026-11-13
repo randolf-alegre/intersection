@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { reactive, ref, watch } from 'vue'
 import type { VForm } from 'vuetify/components'
+import { useConfirmDelete } from '@/modules/admin/composables/useConfirmDelete'
 import { useNeighborhoodStore } from '@/modules/guest/stores/neighborhoodStore'
 import type { Neighborhood, NeighborhoodFields } from '@/shared/services/neighborhoodService'
 
@@ -15,9 +16,11 @@ const emit = defineEmits<{
 }>()
 
 const neighborhoodStore = useNeighborhoodStore()
-const confirmingDelete = ref(false)
-const deleting = ref(false)
-const deleteError = ref<string | null>(null)
+const { confirmingDelete, deleting, deleteError, resetDelete, confirmDelete } = useConfirmDelete(
+  () => props.neighborhood?.id,
+  (id) => neighborhoodStore.removeNeighborhood(id),
+  () => emit('deleted'),
+)
 
 const fields = reactive<NeighborhoodFields>({
   name: '',
@@ -41,31 +44,10 @@ watch(
     fields.hashtagDescription = neighborhood?.hashtagDescription ?? ''
     fields.city = neighborhood?.city ?? ''
     fields.tags = neighborhood?.tags ?? ''
-    confirmingDelete.value = false
-    deleteError.value = null
+    resetDelete()
   },
   { immediate: true },
 )
-
-async function confirmDelete() {
-  const neighborhood = props.neighborhood
-  if (!neighborhood) return
-
-  deleting.value = true
-  deleteError.value = null
-  try {
-    const result = await neighborhoodStore.removeNeighborhood(neighborhood.id)
-    if (!result.ok) {
-      deleteError.value = result.error.message
-      return
-    }
-
-    confirmingDelete.value = false
-    emit('deleted')
-  } finally {
-    deleting.value = false
-  }
-}
 
 async function submit(): Promise<NeighborhoodFormValues | null> {
   const result = await form.value?.validate()

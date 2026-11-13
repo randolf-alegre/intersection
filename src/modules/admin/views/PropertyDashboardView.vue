@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
+import { useRecordDialog } from '@/modules/admin/composables/useRecordDialog'
 import PropertyForm from '@/modules/admin/components/PropertyForm.vue'
 import PropertyNeighborhoodForm from '@/modules/admin/components/PropertyNeighborhoodForm.vue'
 import IntersectionTable from '@/shared/components/IntersectionTable.vue'
@@ -23,10 +24,8 @@ const propertyColumns: { title: string; key: 'name' | 'address' | 'description' 
 const propertiesStore = usePropertiesStore()
 const neighborhoodStore = useNeighborhoodStore()
 const toast = useAdminToastStore()
-const open = ref(false)
-const saving = ref(false)
-const formError = ref<string | null>(null)
-const editing = ref<Property | null>(null)
+const { open, saving, formError, editing, openRecord, closeRecord, saveRecord } =
+  useRecordDialog<Property>()
 const formTab = ref('details')
 const propertyForm = ref<{ submit: () => Promise<PropertyFields | null> } | null>(null)
 const savingAssociation = ref(false)
@@ -40,43 +39,32 @@ onMounted(async () => {
 })
 
 function openProperty(property: Property | null) {
-  editing.value = property
-  formError.value = null
   formTab.value = 'details'
-  open.value = true
+  openRecord(property)
 }
 
 function closeProperty() {
-  open.value = false
-  formError.value = null
+  closeRecord()
 }
 
 async function saveProperty() {
-  const fields = await propertyForm.value?.submit()
-  if (!fields) return
+  await saveRecord(
+    () => propertyForm.value?.submit(),
+    async (fields, property) => {
+      const result = property
+        ? await updateProperty(property.id, fields)
+        : await createProperty(fields)
+      if (!result.ok) return result
 
-  const property = editing.value
-  saving.value = true
-  formError.value = null
-  try {
-    const result = property
-      ? await updateProperty(property.id, fields)
-      : await createProperty(fields)
-    if (!result.ok) {
-      formError.value = result.error.message
-      return
-    }
-
-    if (property) {
-      const index = propertiesStore.properties.findIndex((item) => item.id === result.property.id)
-      if (index >= 0) propertiesStore.properties[index] = result.property
-    } else {
-      propertiesStore.properties.push(result.property)
-    }
-    open.value = false
-  } finally {
-    saving.value = false
-  }
+      if (property) {
+        const index = propertiesStore.properties.findIndex((item) => item.id === result.property.id)
+        if (index >= 0) propertiesStore.properties[index] = result.property
+      } else {
+        propertiesStore.properties.push(result.property)
+      }
+      return { ok: true }
+    },
+  )
 }
 
 async function saveNeighborhoods() {

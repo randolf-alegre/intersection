@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { useIdSelection } from '@/modules/admin/composables/useIdSelection'
 import type { Establishment } from '@/shared/services/establishmentService'
 import {
   associateNeighborhoodEstablishments,
-  type AssociateEstablishmentsResult,
   type Neighborhood,
 } from '@/shared/services/neighborhoodService'
 
@@ -12,23 +11,10 @@ const props = defineProps<{
   establishments: Establishment[]
 }>()
 
-const selectedIds = ref<number[]>([])
-const error = ref<string | null>(null)
-
-watch(
+const { selectedIds, error, submit } = useIdSelection(
   () => props.neighborhood.id,
-  () => {
-    selectedIds.value = []
-    error.value = null
-  },
+  (id, ids) => associateNeighborhoodEstablishments(id, ids),
 )
-
-async function submit(): Promise<AssociateEstablishmentsResult> {
-  error.value = null
-  const result = await associateNeighborhoodEstablishments(props.neighborhood.id, selectedIds.value)
-  if (!result.ok) error.value = result.error.message
-  return result
-}
 
 defineExpose({ submit })
 </script>

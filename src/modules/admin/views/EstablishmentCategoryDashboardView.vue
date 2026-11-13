@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
+import { useRecordDialog } from '@/modules/admin/composables/useRecordDialog'
 import EstablishmentCategoryForm from '@/modules/admin/components/EstablishmentCategoryForm.vue'
 import { useEstablishmentCategoryStore } from '@/modules/admin/stores/establishmentCategoryStore'
 import IntersectionTable from '@/shared/components/IntersectionTable.vue'
@@ -11,10 +12,8 @@ import {
 } from '@/shared/services/establishmentCategoryService'
 
 const categoryStore = useEstablishmentCategoryStore()
-const open = ref(false)
-const saving = ref(false)
-const formError = ref<string | null>(null)
-const editing = ref<EstablishmentCategory | null>(null)
+const { open, saving, formError, editing, openRecord, closeRecord, saveRecord } =
+  useRecordDialog<EstablishmentCategory>()
 const categoryForm = ref<{ submit: () => Promise<EstablishmentCategoryFields | null> } | null>(null)
 
 const categoryColumns: { title: string; key: 'name' }[] = [{ title: 'Name', key: 'name' }]
@@ -22,42 +21,31 @@ const categoryColumns: { title: string; key: 'name' }[] = [{ title: 'Name', key:
 onMounted(() => categoryStore.loadCategories())
 
 function openCategory(category: EstablishmentCategory | null) {
-  editing.value = category
-  formError.value = null
-  open.value = true
+  openRecord(category)
 }
 
 function closeCategory() {
-  open.value = false
-  formError.value = null
+  closeRecord()
 }
 
 async function saveCategory() {
-  const values = await categoryForm.value?.submit()
-  if (!values) return
+  await saveRecord(
+    () => categoryForm.value?.submit(),
+    async (values, category) => {
+      const result = category
+        ? await updateEstablishmentCategory(category.id, values)
+        : await createEstablishmentCategory(values)
+      if (!result.ok) return result
 
-  const category = editing.value
-  saving.value = true
-  formError.value = null
-  try {
-    const result = category
-      ? await updateEstablishmentCategory(category.id, values)
-      : await createEstablishmentCategory(values)
-    if (!result.ok) {
-      formError.value = result.error.message
-      return
-    }
-
-    if (category) {
-      const index = categoryStore.categories.findIndex((item) => item.id === result.category.id)
-      if (index >= 0) categoryStore.categories[index] = result.category
-    } else {
-      categoryStore.categories.push(result.category)
-    }
-    open.value = false
-  } finally {
-    saving.value = false
-  }
+      if (category) {
+        const index = categoryStore.categories.findIndex((item) => item.id === result.category.id)
+        if (index >= 0) categoryStore.categories[index] = result.category
+      } else {
+        categoryStore.categories.push(result.category)
+      }
+      return { ok: true }
+    },
+  )
 }
 </script>
 

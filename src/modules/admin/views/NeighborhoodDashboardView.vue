@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
+import { useRecordDialog } from '@/modules/admin/composables/useRecordDialog'
 import NeighborhoodEstablishmentForm from '@/modules/admin/components/NeighborhoodEstablishmentForm.vue'
 import NeighborhoodForm from '@/modules/admin/components/NeighborhoodForm.vue'
 import type { NeighborhoodFormValues } from '@/modules/admin/components/NeighborhoodForm.vue'
@@ -21,10 +22,8 @@ const neighborhoodStore = useNeighborhoodStore()
 const propertiesStore = usePropertiesStore()
 const establishmentStore = useEstablishmentStore()
 const toast = useAdminToastStore()
-const open = ref(false)
-const saving = ref(false)
-const formError = ref<string | null>(null)
-const editing = ref<Neighborhood | null>(null)
+const { open, saving, formError, editing, openRecord, closeRecord, saveRecord } =
+  useRecordDialog<Neighborhood>()
 const formTab = ref('details')
 const neighborhoodForm = ref<{ submit: () => Promise<NeighborhoodFormValues | null> } | null>(null)
 const savingAssociation = ref(false)
@@ -47,44 +46,33 @@ onMounted(async () => {
 })
 
 function openNeighborhood(neighborhood: Neighborhood | null) {
-  editing.value = neighborhood
-  formError.value = null
   formTab.value = 'details'
-  open.value = true
+  openRecord(neighborhood)
 }
 
 function closeNeighborhood() {
-  open.value = false
-  formError.value = null
+  closeRecord()
 }
 
 async function saveNeighborhood() {
-  const values = await neighborhoodForm.value?.submit()
-  if (!values) return
+  await saveRecord(
+    () => neighborhoodForm.value?.submit(),
+    async (values, neighborhood) => {
+      const result = neighborhood
+        ? await updateNeighborhood(neighborhood.id, values)
+        : await createNeighborhood(values)
+      if (!result.ok) return result
 
-  const neighborhood = editing.value
-  saving.value = true
-  formError.value = null
-  try {
-    const result = neighborhood
-      ? await updateNeighborhood(neighborhood.id, values)
-      : await createNeighborhood(values)
-    if (!result.ok) {
-      formError.value = result.error.message
-      return
-    }
-
-    const saved = result.neighborhood
-    if (neighborhood) {
-      const index = neighborhoodStore.neighborhoods.findIndex((item) => item.id === saved.id)
-      if (index >= 0) neighborhoodStore.neighborhoods[index] = saved
-    } else {
-      neighborhoodStore.neighborhoods.push(saved)
-    }
-    open.value = false
-  } finally {
-    saving.value = false
-  }
+      const saved = result.neighborhood
+      if (neighborhood) {
+        const index = neighborhoodStore.neighborhoods.findIndex((item) => item.id === saved.id)
+        if (index >= 0) neighborhoodStore.neighborhoods[index] = saved
+      } else {
+        neighborhoodStore.neighborhoods.push(saved)
+      }
+      return { ok: true }
+    },
+  )
 }
 
 async function saveProperties() {

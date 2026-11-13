@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import type { VForm } from 'vuetify/components'
+import { useConfirmDelete } from '@/modules/admin/composables/useConfirmDelete'
 import { useEstablishmentCategoryStore } from '@/modules/admin/stores/establishmentCategoryStore'
 import type {
   EstablishmentCategory,
@@ -16,9 +17,11 @@ const emit = defineEmits<{
 }>()
 
 const categoryStore = useEstablishmentCategoryStore()
-const confirmingDelete = ref(false)
-const deleting = ref(false)
-const deleteError = ref<string | null>(null)
+const { confirmingDelete, deleting, deleteError, resetDelete, confirmDelete } = useConfirmDelete(
+  () => props.category?.id,
+  (id) => categoryStore.removeCategory(id),
+  () => emit('deleted'),
+)
 const name = ref('')
 const form = ref<VForm | null>(null)
 
@@ -28,31 +31,10 @@ watch(
   () => props.category,
   (category) => {
     name.value = category?.name ?? ''
-    confirmingDelete.value = false
-    deleteError.value = null
+    resetDelete()
   },
   { immediate: true },
 )
-
-async function confirmDelete() {
-  const category = props.category
-  if (!category) return
-
-  deleting.value = true
-  deleteError.value = null
-  try {
-    const result = await categoryStore.removeCategory(category.id)
-    if (!result.ok) {
-      deleteError.value = result.error.message
-      return
-    }
-
-    confirmingDelete.value = false
-    emit('deleted')
-  } finally {
-    deleting.value = false
-  }
-}
 
 async function submit(): Promise<EstablishmentCategoryFields | null> {
   const result = await form.value?.validate()
