@@ -1,32 +1,18 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { useIdSelection } from '@/modules/admin/composables/useIdSelection'
 import { associatePropertyNeighborhoods } from '@/shared/services/propertyNeighborhoodService'
 import type { Neighborhood } from '@/shared/services/neighborhoodService'
 import type { Property } from '@/shared/services/propertiesService'
-import type { PropertyNeighborhoodResult } from '@/shared/services/propertyNeighborhoodService'
 
 const props = defineProps<{
   property: Property
   neighborhoods: Neighborhood[]
 }>()
 
-const selectedIds = ref<number[]>([])
-const error = ref<string | null>(null)
-
-watch(
+const { selectedIds, error, submit } = useIdSelection(
   () => props.property.id,
-  () => {
-    selectedIds.value = []
-    error.value = null
-  },
+  (id, ids) => associatePropertyNeighborhoods(id, ids),
 )
-
-async function submit(): Promise<PropertyNeighborhoodResult> {
-  error.value = null
-  const result = await associatePropertyNeighborhoods(props.property.id, selectedIds.value)
-  if (!result.ok) error.value = result.error.message
-  return result
-}
 
 defineExpose({ submit })
 </script>

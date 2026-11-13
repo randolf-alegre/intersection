@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
+import { useRecordDialog } from '@/modules/admin/composables/useRecordDialog'
 import EstablishmentForm from '@/modules/admin/components/EstablishmentForm.vue'
 import type { EstablishmentFormValues } from '@/modules/admin/components/EstablishmentForm.vue'
 import { useEstablishmentCategoryStore } from '@/modules/admin/stores/establishmentCategoryStore'
@@ -9,10 +10,8 @@ import type { Establishment } from '@/shared/services/establishmentService'
 
 const establishmentStore = useEstablishmentStore()
 const categoryStore = useEstablishmentCategoryStore()
-const open = ref(false)
-const saving = ref(false)
-const formError = ref<string | null>(null)
-const editing = ref<Establishment | null>(null)
+const { open, saving, formError, editing, openRecord, closeRecord, saveRecord } =
+  useRecordDialog<Establishment>()
 const establishmentForm = ref<{ submit: () => Promise<EstablishmentFormValues | null> } | null>(
   null,
 )
@@ -29,36 +28,21 @@ onMounted(() => {
 })
 
 function openEstablishment(establishment: Establishment | null) {
-  editing.value = establishment
-  formError.value = null
-  open.value = true
+  openRecord(establishment)
 }
 
 function closeEstablishment() {
-  open.value = false
-  formError.value = null
+  closeRecord()
 }
 
 async function saveEstablishment() {
-  const values = await establishmentForm.value?.submit()
-  if (!values) return
-
-  const establishment = editing.value
-  saving.value = true
-  formError.value = null
-  try {
-    const result = establishment
-      ? await establishmentStore.saveEstablishment(establishment.id, values)
-      : await establishmentStore.addEstablishment(values)
-    if (!result.ok) {
-      formError.value = result.error.message
-      return
-    }
-
-    open.value = false
-  } finally {
-    saving.value = false
-  }
+  await saveRecord(
+    () => establishmentForm.value?.submit(),
+    (values, establishment) =>
+      establishment
+        ? establishmentStore.saveEstablishment(establishment.id, values)
+        : establishmentStore.addEstablishment(values),
+  )
 }
 </script>
 

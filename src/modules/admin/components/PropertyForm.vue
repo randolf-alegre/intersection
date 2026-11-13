@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { reactive, ref, watch } from 'vue'
 import type { VForm } from 'vuetify/components'
+import { useConfirmDelete } from '@/modules/admin/composables/useConfirmDelete'
 import { usePropertiesStore } from '@/modules/guest/stores/propertiesStore'
 import type { Property, PropertyFields } from '@/shared/services/propertiesService'
 
@@ -13,9 +14,11 @@ const emit = defineEmits<{
 }>()
 
 const propertiesStore = usePropertiesStore()
-const confirmingDelete = ref(false)
-const deleting = ref(false)
-const deleteError = ref<string | null>(null)
+const { confirmingDelete, deleting, deleteError, resetDelete, confirmDelete } = useConfirmDelete(
+  () => props.property?.id,
+  (id) => propertiesStore.removeProperty(id),
+  () => emit('deleted'),
+)
 
 const fields = reactive<PropertyFields>({
   name: '',
@@ -33,30 +36,10 @@ watch(
     fields.name = property?.name ?? ''
     fields.address = property?.address ?? ''
     fields.description = property?.description ?? ''
-    confirmingDelete.value = false
-    deleteError.value = null
+    resetDelete()
   },
   { immediate: true },
 )
-
-async function confirmDelete() {
-  if (!props.property) return
-
-  deleting.value = true
-  deleteError.value = null
-  try {
-    const result = await propertiesStore.removeProperty(props.property.id)
-    if (!result.ok) {
-      deleteError.value = result.error.message
-      return
-    }
-
-    confirmingDelete.value = false
-    emit('deleted')
-  } finally {
-    deleting.value = false
-  }
-}
 
 async function submit(): Promise<PropertyFields | null> {
   const result = await form.value?.validate()
